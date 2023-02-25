@@ -79,7 +79,7 @@ char*  get_netmask(const struct ifaddrs* const ifa)
 string get_byte_from_address(const string& src, int& begin_pos)
 {
     string dest;
-    int point_pos = src.find('.', begin_pos);
+    int point_pos = (int)src.find('.', begin_pos);
     if (point_pos != string::npos)
         dest = src.substr(begin_pos, point_pos - begin_pos);
     begin_pos = point_pos;
@@ -173,17 +173,16 @@ void   search_for_devices(const string& templateAddr, const int& cidr)
         cout << i + 1 << ".\tether = " << v_macs[i] << "\tinet = " << v_ips[i] << "\n";
 }
 
-
-
-int main()
+void   search(const string &filter, const string &ifa_name)
 {
-    struct ifaddrs *ifap, *ifa;
-    getifaddrs(&ifap);
+    struct ifaddrs *pIfaddrs, *ifa;
+    getifaddrs(&pIfaddrs);
 
-    for (ifa = ifap; ifa; ifa = ifa->ifa_next)
+    for (ifa = pIfaddrs; ifa; ifa = ifa->ifa_next)
     {
         if (ifa->ifa_addr->sa_family != AF_INET)
             continue;
+
         string _netmask = get_netmask(ifa);
         string _ip = get_ip_address(ifa);
         if (strcmp(ifa->ifa_name, "lo") != 0)
@@ -194,4 +193,8 @@ int main()
         }
         puts("");
     }
+}
+
+int main()
+{
 }
