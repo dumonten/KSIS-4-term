@@ -14,12 +14,15 @@
 #include <unistd.h>
 #include <iostream>
 #include <regex>
+#include <iomanip>
 
 using namespace std;
 
+const int BUFF_SIZE             = 200;
+const int CIDR_MASK_SIZE        = 33;
+const int ADDRESS_CHAR_SIZE     = 15;
 const int MAC_ADDRESS_CHAR_SIZE = 6;
-const int BUFF_SIZE = 200;
-const int CIDR_MASK_SIZE = 33;
+
 const uint32_t cidr_mask[] = {
      0x00000000,  0x80000000,  0xC0000000,
      0xE0000000,  0xF0000000,  0xF8000000,
@@ -45,7 +48,6 @@ void   display_mac_address(const struct ifaddrs* const ifa)
 
     ioctl(fd, SIOCGIFHWADDR, &ifr);
 
-    printf("\t\tMAC address: ");
     for (int i = 0; i < MAC_ADDRESS_CHAR_SIZE; i++)
     {
         if (i != MAC_ADDRESS_CHAR_SIZE - 1)
@@ -53,6 +55,7 @@ void   display_mac_address(const struct ifaddrs* const ifa)
         else
             printf("%.2x", (ifr.ifr_hwaddr.sa_data[i]  + 256) % 256);
     }
+    printf("\n");
 
     close(fd);
 }
@@ -133,7 +136,7 @@ void   search_for_devices(const string& templateAddr, const int& cidr)
         FILE *ostream = popen((const char *)command.c_str(), "r");
         if (ostream == nullptr)
         {
-            cout << "Error occurred while reading nmap output." << "\n";
+            cout << "Error: occurred while reading nmap output." << "\n";
             exit(1);
         }
         char ch;
@@ -147,7 +150,7 @@ void   search_for_devices(const string& templateAddr, const int& cidr)
     }
     catch(...)
     {
-        cout << "Error occurred while reading nmap output." << "\n";
+        cout << "Error: occurred while reading nmap output." << "\n";
         exit(1);
     }
     string str_nmap_output = nmap_output;
@@ -169,8 +172,9 @@ void   search_for_devices(const string& templateAddr, const int& cidr)
         str_nmap_output = sips.suffix().str();
     }
 
+    cout << "\tInformation of connected devices to this interface:\n";
     for (int i = 0, n = (int)v_macs.size(); i < n; i++)
-        cout << i + 1 << ".\tether = " << v_macs[i] << "\tinet = " << v_ips[i] << "\n";
+        cout <<  setw(38) << i + 1 << ". inet: " << setw(ADDRESS_CHAR_SIZE) << v_ips[i] << "\tether: " <<  setw(ADDRESS_CHAR_SIZE) << v_macs[i];
 }
 
 void   search(const string &filter, const string &ifa_name)
@@ -178,23 +182,61 @@ void   search(const string &filter, const string &ifa_name)
     struct ifaddrs *pIfaddrs, *ifa;
     getifaddrs(&pIfaddrs);
 
+    bool filter_flag = !(filter == "-l");
+    bool found_flag = false;
+
     for (ifa = pIfaddrs; ifa; ifa = ifa->ifa_next)
     {
-        if (ifa->ifa_addr->sa_family != AF_INET)
+        if (ifa->ifa_addr->sa_family != AF_INET || (filter_flag && (ifa->ifa_name != ifa_name)))
             continue;
-
+        found_flag = true;
+        cout << ifa->ifa_name << ":\n";
         string _netmask = get_netmask(ifa);
         string _ip = get_ip_address(ifa);
+
+        cout << "\tnetmask: " << setw(ADDRESS_CHAR_SIZE) << _netmask << "\tinet: " << setw(ADDRESS_CHAR_SIZE) << _ip;
+
         if (strcmp(ifa->ifa_name, "lo") != 0)
         {
-            //display_mac_address(ifa);
+            cout << "\tether: ";
+            display_mac_address(ifa);
+
             string templateAddr;
             char cidr = get_cidr_and_templateAddr(_netmask, _ip, templateAddr);
+            search_for_devices(templateAddr, cidr);
         }
-        puts("");
+
+        cout << "\n";
+    }
+    if (!found_flag && filter_flag)
+    {
+        cout << "Error: incorrect name." << "\n";
+        exit(1);
     }
 }
 
-int main()
+int main(int argc, char *argv[])
 {
+    if (argc != 2)
+    {
+        cout << "Error: missing parameters." << "\n";
+        exit(1);
+    }
+    string option;
+    try
+    {
+        option = argv[1];
+    }
+    catch(...)
+    {
+        cout << "Error: incorrect option." << "\n";
+        exit(1);
+    }
+
+    if (option == "-l")
+        search(option, "");
+    else
+        search("", option);
+
+    return 0;
 }
