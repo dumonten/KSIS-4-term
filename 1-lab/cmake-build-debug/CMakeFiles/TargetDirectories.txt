@@ -1,0 +1,3 @@
+/home/dumonten/Documents/GitHub/KSIS-4-term/1-lab/cmake-build-debug/CMakeFiles/1_lab.dir
+/home/dumonten/Documents/GitHub/KSIS-4-term/1-lab/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/dumonten/Documents/GitHub/KSIS-4-term/1-lab/cmake-build-debug/CMakeFiles/rebuild_cache.dir
