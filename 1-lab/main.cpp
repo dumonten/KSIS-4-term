@@ -174,12 +174,13 @@ void   search_for_devices(const string& templateAddr, const int& cidr)
 
     cout << "\tInformation of connected devices to this interface:\n";
     for (int i = 0, n = (int)v_macs.size(); i < n; i++)
-        cout <<  setw(38) << i + 1 << ". inet: " << setw(ADDRESS_CHAR_SIZE) << v_ips[i] << "\tether: " <<  setw(ADDRESS_CHAR_SIZE) << v_macs[i];
+        cout <<  setw(38) << i + 1 << ". inet: " << setw(ADDRESS_CHAR_SIZE) << v_ips[i] << "\tether: " <<  setw(ADDRESS_CHAR_SIZE) << v_macs[i] << "\n";
 }
 
 void   search(const string &filter, const string &ifa_name)
 {
     struct ifaddrs *pIfaddrs, *ifa;
+
     getifaddrs(&pIfaddrs);
 
     bool filter_flag = !(filter == "-l");
@@ -208,6 +209,9 @@ void   search(const string &filter, const string &ifa_name)
 
         cout << "\n";
     }
+
+    freeifaddrs(pIfaddrs);
+
     if (!found_flag && filter_flag)
     {
         cout << "Error: incorrect name." << "\n";
